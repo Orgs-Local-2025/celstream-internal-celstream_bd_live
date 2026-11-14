@@ -84,8 +84,9 @@ automatically before any migration.
 |---|---|
 | `THEIRSTACK_API_KEY`, `OPENAI_API_KEY`, `APOLLO_API_KEY`, `HUBSPOT_ACCESS_TOKEN` | Provider credentials (unchanged) |
 | `OPENAI_MODEL`, `OPENAI_*_USD_PER_MILLION`, `OPENAI_MAX_OUTPUT_TOKENS`, `AI_RUN_BUDGET_USD` | Model and pricing (unchanged) |
-| `PORTAL_FQDN` | Internal FQDN approved by IT, e.g. `bd-poc.celstream-in.com`. Default `bd-poc.localhost` |
-| `HTTPS_BIND` | Host IP that 443 is published on. Default `127.0.0.1` (local only). Set it to the VPN adapter IP once the IT handoff is complete |
+| `PORTAL_FQDN` | `bd-poc.celstream-in.com` (approved). Default `bd-poc.localhost` |
+| `HTTPS_BIND` | Host IP that 443 is published on. Default `127.0.0.1` (local only). For office + VPN access: the corporate LAN IP **10.255.109.70**. `deploy.ps1` requires a validated corporate certificate for any non-loopback value |
+| `PORTAL_MODE` | `read-only` (default): no run controls or API verification in the portal; operators use `scripts\start-run.ps1` on the host. `operator`: run controls for everyone who can reach the portal |
 | `HTTPS_PORT` | Default `443` |
 | `WORKER_POLL_SECONDS` | Queue poll interval (currently 2) |
 
@@ -152,10 +153,23 @@ powershell -File scripts\restore.ps1 -File backups\<file>.db  # stops worker+por
 A pre-migration backup is taken automatically before each schema upgrade. The local
 pre-Docker backup is `data\backups\bd_live-pre-migration-v0-to-v2-*.db`.
 
+## Operator commands on the host
+
+```powershell
+powershell -File scripts\start-run.ps1 -MaxJobs 3 -SyncExisting   # queue a live run
+powershell -File scripts\start-run.ps1 -Reprocess                  # re-check stored jobs, no new CRM records
+powershell -File scripts\start-run.ps1 -Status                     # worker/run status (same data as /status.json)
+```
+
+`https://<fqdn>/status.json` publishes the worker heartbeat, run state and counts (no credentials,
+contacts or CRM data) so access can be validated with `scripts\validate-access.ps1`.
+
 ## HTTPS and access
 
-- **Shared use:** place the corporate-CA-issued `portal.crt` (full chain) and `portal.key` in
-  `certs\`, set `PORTAL_FQDN`, then re-run `deploy.ps1`.
+- **Shared use:** `scripts\new-cert-request.ps1 -Request` creates the key and CSR for IT; `-Install`
+  or `-FromPfx` installs the returned certificate. `deploy.ps1` validates it with `bdlive.certcheck`
+  (SAN, validity, key match, chain, not self-signed) before serving it, and removes the interim
+  `localhost` site in corporate mode. Network, DNS, firewall and SSO steps: `fqdn-it-handoff.md`.
 - **Interim TLS:** without corporate certificates, `tls internal` is used. It is for local
   validation only, because other machines won't trust it.
 - **Optional login:** `scripts\set-portal-auth.ps1` adds HTTPS basic auth (bcrypt hash only).

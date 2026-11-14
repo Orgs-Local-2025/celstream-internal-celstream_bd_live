@@ -23,8 +23,8 @@ COPY .streamlit ./.streamlit
 COPY app.py run_workflow.py ./
 
 RUN useradd --uid 10001 --create-home --shell /usr/sbin/nologin bdlive \
-    && mkdir -p /data /backups \
-    && chown -R bdlive:bdlive /data /backups
+    && mkdir -p /data /backups /status \
+    && chown -R bdlive:bdlive /data /backups /status
 USER bdlive
 
 EXPOSE 8501

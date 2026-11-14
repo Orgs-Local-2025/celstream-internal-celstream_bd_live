@@ -43,36 +43,65 @@ $required = 'THEIRSTACK_API_KEY', 'OPENAI_API_KEY', 'OPENAI_MODEL', 'APOLLO_API_
 $missing = $required | Where-Object { $_ -notin $envKeys }
 if ($missing) { Fail "Missing .env keys: $($missing -join ', ')" }
 Write-Host "Required keys present: $($required -join ', ')"
-$fqdn = (Get-Content .env | Where-Object { $_ -match '^\s*PORTAL_FQDN\s*=' } |
-    Select-Object -Last 1) -replace '^\s*PORTAL_FQDN\s*=\s*', ''
-if (-not $fqdn) { $fqdn = 'bd-poc.localhost'; Write-Host 'PORTAL_FQDN not set; using bd-poc.localhost (local only).' }
-else { Write-Host "PORTAL_FQDN = $fqdn" }
+function EnvValue($name, $default) {
+    $line = Get-Content .env | Where-Object { $_ -match "^\s*$name\s*=" } | Select-Object -Last 1
+    $value = if ($line) { ($line -split '=', 2)[1].Trim() } else { '' }
+    if ($value) { $value } else { $default }
+}
+$fqdn = EnvValue 'PORTAL_FQDN' 'bd-poc.localhost'
+$bind = EnvValue 'HTTPS_BIND' '127.0.0.1'
+$port = EnvValue 'HTTPS_PORT' '443'
+$shared = $bind -notin @('127.0.0.1', 'localhost')
+Write-Host "PORTAL_FQDN = $fqdn  HTTPS_BIND = ${bind}:$port  ($(if ($shared) {'SHARED: office/VPN access'} else {'local only'}))"
+
+if ($shared) {
+    Step "Checking that $bind is an active address on this workstation"
+    $addr = Get-NetIPAddress -IPAddress $bind -ErrorAction SilentlyContinue
+    if (-not $addr -or $addr.AddressState -ne 'Preferred') {
+        Fail ("$bind is not an active IPv4 address here (state: $(if ($addr) {$addr.AddressState} else {'absent'})). " +
+              'Connect the workstation to the corporate LAN (wired adapter) or set HTTPS_BIND=127.0.0.1 for local-only use.')
+    }
+    Write-Host "OK: $bind on '$($addr.InterfaceAlias)'"
+}
 
 $authFile = Join-Path $root 'proxy\auth\active.caddy'
 if (-not (Test-Path $authFile)) {
-    # Git-ignored (may hold a basic_auth hash); default to VPN-only access.
+    # Git-ignored (may hold a basic_auth hash); default to network-restricted access only.
     New-Item -ItemType Directory -Force (Split-Path $authFile) | Out-Null
-    Set-Content -Encoding ascii $authFile '# No application-level authentication: VPN-only access.'
-}
-
-Step 'Selecting TLS mode'
-$tlsFile = Join-Path $root 'proxy\tls\active.caddy'
-if ((Test-Path certs\portal.crt) -and (Test-Path certs\portal.key)) {
-    Set-Content -Encoding ascii $tlsFile @(
-        '# Corporate CA certificate (shared use).',
-        'tls /certs/portal.crt /certs/portal.key')
-    Write-Host 'Using corporate certificate certs\portal.crt' -ForegroundColor Green
-} else {
-    Set-Content -Encoding ascii $tlsFile @(
-        '# Interim TLS: Caddy local CA. NOT trusted by other machines - local validation only.',
-        'tls internal')
-    Write-Host 'No corporate certificate in certs\ -> interim Caddy internal CA (local validation only).' -ForegroundColor Yellow
+    Set-Content -Encoding ascii $authFile '# No application-level authentication: LAN/VPN-restricted access.'
 }
 
 if (-not $SkipBuild) {
     Step 'Building images'
     docker compose build
     if ($LASTEXITCODE -ne 0) { Fail 'docker compose build failed.' }
+}
+
+Step 'Selecting TLS mode'
+$tlsFile = Join-Path $root 'proxy\tls\active.caddy'
+$sitesFile = Join-Path $root 'proxy\tls\extra-sites.caddy'
+if ((Test-Path certs\portal.crt) -and (Test-Path certs\portal.key)) {
+    docker compose run --rm --no-deps -v "${root}\certs:/certs:ro" bd-live-worker `
+        python -m bdlive.certcheck /certs/portal.crt /certs/portal.key $fqdn
+    if ($LASTEXITCODE -ne 0) { Fail "certs\portal.crt / portal.key failed validation for $fqdn (see above)." }
+    Set-Content -Encoding ascii $tlsFile @(
+        '# Corporate CA certificate (shared access). Written by scripts/deploy.ps1.',
+        'tls /certs/portal.crt /certs/portal.key')
+    # The interim localhost site (Caddy local CA) is removed so it can never be served.
+    Set-Content -Encoding ascii $sitesFile '# Corporate mode: no additional sites.'
+    Write-Host 'Using the validated corporate certificate certs\portal.crt' -ForegroundColor Green
+} else {
+    if ($shared) {
+        Fail ("No corporate certificate in certs\ (portal.crt + portal.key). The interim local CA must not be " +
+              'used for shared access. Obtain the certificate (scripts\new-cert-request.ps1) or set HTTPS_BIND=127.0.0.1.')
+    }
+    Set-Content -Encoding ascii $tlsFile @(
+        '# Interim TLS: Caddy local CA. NOT trusted by other machines - local validation only.',
+        'tls internal')
+    Set-Content -Encoding ascii $sitesFile @(
+        '# Interim mode: local validation site using the Caddy local CA (never shared).',
+        'localhost {', "`ttls internal", "`timport portal", '}')
+    Write-Host 'No corporate certificate -> interim Caddy internal CA, local access only.' -ForegroundColor Yellow
 }
 
 if (-not $NoSeed -and (Test-Path data\bd_live.db)) {
@@ -98,9 +127,14 @@ do {
 } while ($unhealthy -and (Get-Date) -lt $deadline)
 if ($unhealthy) { Fail "Not healthy: $($unhealthy -join ', '). Check: docker compose logs" }
 
-Step 'Local HTTPS check'
-$code = curl.exe -s -o NUL -w '%{http_code}' -k --resolve "${fqdn}:443:127.0.0.1" "https://${fqdn}/_stcore/health"
-Write-Host "https://$fqdn/_stcore/health via 127.0.0.1 -> HTTP $code"
+Step 'HTTPS check on this workstation'
+$target = if ($shared) { $bind } else { '127.0.0.1' }
+$code = curl.exe -s -o NUL -w '%{http_code}' -k --resolve "${fqdn}:${port}:$target" "https://${fqdn}:$port/_stcore/health"
+Write-Host "https://${fqdn}:$port/_stcore/health via $target -> HTTP $code"
+$status = curl.exe -s -k --resolve "${fqdn}:${port}:$target" "https://${fqdn}:$port/status.json"
+Write-Host "status.json: $status"
 docker compose exec -T bd-live-worker python -m bdlive.dbtools status
 
-Write-Host "`nDeployment complete. Local: https://localhost  (FQDN: https://$fqdn once DNS exists)" -ForegroundColor Green
+Write-Host "`nDeployment complete: https://$fqdn$(if ($port -ne '443') {":$port"})" -ForegroundColor Green
+if ($shared) { Write-Host 'Next: run scripts\validate-access.ps1 from an office PC and a VPN PC (see docs\fqdn-it-handoff.md).' }
+else { Write-Host 'Local only. Open https://localhost (interim certificate warning is expected).' }

@@ -32,9 +32,14 @@ services:
       LIVE_BACKUP_DIR: /backups
       TZ: UTC
       WORKER_ID: bd-live-worker
+      WORKER_STATUS_FILE: /status/status.json
     # Allow a short run to finish on `docker compose stop`; an interrupted run is marked
     # failed on the next start and can be re-queued (all stages are idempotent).
     stop_grace_period: 2m
+    volumes:
+      - bd-live-data:/data
+      - bd-live-backups:/backups
+      - bd-live-status:/status
     healthcheck:
       test: ["CMD", "python", "-m", "bdlive.worker", "--health"]
       interval: 30s
@@ -47,6 +52,14 @@ services:
     container_name: bd-live-portal
     command: ["streamlit", "run", "app.py", "--server.address=0.0.0.0",
               "--server.port=8501"]
+    environment:
+      LIVE_DATABASE_PATH: /data/bd_live.db
+      LIVE_BACKUP_DIR: /backups
+      TZ: UTC
+      # read-only: shared portal shows data only; runs are started by operators on the
+      # host (scripts/start-run.ps1) until Entra ID SSO roles are in place.
+      # operator: the portal's Start button is enabled for everyone who can reach it.
+      PORTAL_MODE: ${PORTAL_MODE:-read-only}
     expose: ["8501"]
     healthcheck:
       test: ["CMD", "python", "-c",
@@ -65,14 +78,15 @@ services:
     environment:
       PORTAL_FQDN: ${PORTAL_FQDN:-bd-poc.localhost}
     ports:
-      # HTTPS only. Bind to the VPN adapter IP (HTTPS_BIND) once IT confirms it; 127.0.0.1
-      # keeps the portal local-only until the VPN/firewall/DNS handoff is complete.
+      # HTTPS only. HTTPS_BIND = the workstation's reserved corporate LAN IP for shared
+      # access (office + VPN users); 127.0.0.1 keeps the portal local-only.
       - "${HTTPS_BIND:-127.0.0.1}:${HTTPS_PORT:-443}:443"
     volumes:
       - ./proxy/Caddyfile:/etc/caddy/Caddyfile:ro
       - ./proxy/tls:/etc/caddy/tls:ro
       - ./proxy/auth:/etc/caddy/auth:ro
       - ./certs:/certs:ro
+      - bd-live-status:/srv/status:ro
       - caddy-data:/data
       - caddy-config:/config
     networks: [bd-internal]
@@ -90,6 +104,7 @@ services:
 volumes:
   bd-live-data:        # SQLite database (jobs, companies, contacts, analyses, runs, logs)
   bd-live-backups:     # automatic pre-migration and manual backups
+  bd-live-status:      # status.json written by the worker, served read-only by the proxy
   caddy-data:          # Caddy internal CA / certificate state
   caddy-config:
 

@@ -1,65 +1,157 @@
-# FQDN, certificate and access handoff — Celstream BD Live PoC
+# bd-poc.celstream-in.com — internal network deployment handoff
 
-Prepared 14 Nov 2026 from an actual inspection of workstation RAGHUGN-LAP. **Not complete:**
-DNS resolution and remote access over the VPN have not been verified, and cannot be until the
-items below are done.
+Updated 14 Nov 2026. **Status: NOT COMPLETE.** Neither an office user nor a VPN user can reach
+`https://bd-poc.celstream-in.com` yet. The DNS record, corporate certificate, firewall rule and
+VPN DNS settings below are still outstanding.
 
-## Inspection findings
+## Target
 
-| Item | Finding |
+| Item | Value |
 |---|---|
-| OS | Windows 11 Enterprise 10.0.26200, joined to AD domain `celstream-in.com` |
-| DNS suffix search list | `celstream-in.com` |
-| VPN clients installed | FortiClient VPN 7.4.3, GlobalProtect 6.3.3 |
-| VPN state at inspection | **Not connected.** Both virtual adapters were disconnected or disabled, so **no VPN IPv4 address is available yet** |
-| Active network | Home Wi-Fi 192.168.1.55/24 (DHCP), Windows profile **Public** |
-| Other adapter | Wired Ethernet with static 10.255.110.250/24 and DNS 8.8.8.8, unplugged |
-| Docker | Initially not installed. Docker Desktop (Engine 29.9.3, Compose v5.7.0, WSL 2) was installed later on 14 Nov; the stack is now deployed locally |
-| Privileges | User is in local Administrators but runs non-elevated (UAC) |
-| Firewall | Enabled on all profiles; no inbound rule for 443 |
-| Port 443 | Free (port 80 is held by Windows `System`/http.sys) |
+| URL (office and VPN, same name) | `https://bd-poc.celstream-in.com` |
+| Hosting workstation | Windows 11 + Docker Desktop, corporate LAN IP **10.255.109.70** (subnet 10.255.109.0/24) |
+| Primary DNS destination | **10.255.109.70**, the corporate LAN IP, never a VPN-assigned address |
+| Exposed service | TCP **443** only (Caddy proxy `bd-live-proxy`, bound to 10.255.109.70) |
+| Never exposed | Streamlit 8501, `bd-live-worker`, SQLite / Docker volumes |
+| Certificate | Issued by the corporate internal CA, SAN `DNS:bd-poc.celstream-in.com`. The interim Caddy local CA is refused by `deploy.ps1` for any shared (non-loopback) binding |
 
-## Request to Celstream IT / network administrator
+```
+Office PC ──(office LAN)────────────────┐
+                                         ├─ TCP 443 ─▶ 10.255.109.70 ─▶ bd-live-proxy (Caddy, corporate cert)
+VPN PC ──(FortiClient SSL-VPN tunnel)───┘                    └─▶ bd-live-portal :8501 (internal only)
+        DNS: bd-poc.celstream-in.com A 10.255.109.70             bd-live-worker  (internal only)
+```
 
-| Item | Requested value |
+## Facts verified so far (from VPN client RAGHUGN-LAP, 14 Nov 2026)
+
+| Check | Result |
 |---|---|
-| FQDN | `bd-poc.celstream-in.com` (proposed: `celstream-in.com` is the AD domain seen on this machine). IT to confirm the approved internal zone and name |
-| DNS record | **A record**, internal DNS only (never public) → workstation's **VPN-assigned IPv4** |
-| VPN IP stability | The VPN IP is usually assigned per session. Need a **static or reserved VPN IP** for this workstation and user (FortiClient/GlobalProtect address reservation), or an alternative such as a CNAME to an auto-registered host record |
-| Port | TCP **443** (HTTPS) only. No other port is exposed |
-| Certificate | Server certificate from the **corporate internal CA**: SAN `bd-poc.celstream-in.com`, PEM full chain + unencrypted key, delivered as `portal.crt` / `portal.key`. The internal root CA must already be trusted on VPN clients. Renewal: IT re-issues before expiry and the key goes into `certs\`, then redeploy (Caddy cannot auto-renew from an internal CA without an ACME endpoint; if the CA offers ACME, it can be configured) |
-| VPN policy | Allow **VPN client → VPN client** (or VPN pool → this host) TCP 443. Many FortiGate/GlobalProtect policies block client-to-client traffic by default |
-| Source restriction | Celstream VPN client subnet(s) only: needed for the Windows firewall rule |
-| Access policy decision | Is VPN-only access sufficient under Celstream policy? If not, choose: (a) basic auth via `set-portal-auth.ps1`, or (b) Entra ID/SSO via an identity-aware proxy (requires an IT app registration; not implemented) |
-| Docker Desktop licence | Confirm the Docker subscription is allowed or provided (required for commercial use above 250 staff / USD 10 M revenue) |
+| VPN client | FortiClient SSL-VPN, client IP 192.168.10.1/32, tunnel next-hop 192.168.10.2 |
+| VPN split-tunnel routes | 10.255.10/11/12/106/108/**109**/110/122.0/24, so **10.255.109.0/24 is already routed** to VPN clients |
+| Ping 10.255.109.70 over VPN | **OK** |
+| TCP 443 over VPN | TCP connects, but **every TLS handshake is reset** (SNI `bd-poc.celstream-in.com`, `localhost`, `bd-poc.localhost`). No HTTPS is served to remote clients yet. The cause must be confirmed on the host; the expected cause is that the stack is still bound to 127.0.0.1 until the corporate certificate is installed |
+| TCP 8501 (Streamlit) over VPN | Closed (correct) |
+| TCP 80 / 3389 over VPN | 80 accepts but never responds; 3389 (RDP) is open. Neither is part of this application. The host owner and IT should confirm they are intended |
+| **VPN DNS** | **The VPN pushes no corporate DNS.** The client keeps using its home router (192.168.1.1), and `_ldap._tcp.dc._msdcs.celstream-in.com` does not resolve. **VPN users therefore cannot resolve any internal name today**, including the new record |
+| `bd-poc.celstream-in.com` | Does not exist yet |
 
-## Who does what
+Not yet verified (they must be checked on the host or confirmed by IT):
+- whether 10.255.109.70 is static or DHCP-reserved
+- the host's own DNS servers
+- office subnets and inter-VLAN filtering
+- FortiGate SSL-VPN → LAN policy for 443
+- the host firewall
 
-| Work | Owner | State |
+To collect the host-side facts, run `scripts\network-report.ps1` on 10.255.109.70.
+
+---
+
+## A. Requires Celstream IT / network / security approval
+
+| # | Request | Detail / acceptance |
 |---|---|---|
-| Worker/portal split, run queue, heartbeat, crash recovery, DB migration + backup | Claude | **Done.** Validated live with local processes |
-| Dockerfile, compose, Caddy, `.dockerignore`, health checks, restart policies, volumes, scripts, docs | Claude | **Done.** Built, deployed and validated locally (see `docker-deployment.md`) |
-| Install WSL 2 + Docker Desktop | Windows administrator | **Done** |
-| Enable *Start Docker Desktop when you sign in* | Workstation user | **Pending** (currently off) |
-| `scripts\deploy.ps1` (build, seed volume, start, health, local HTTPS) | Claude | **Done.** All containers healthy; local HTTPS verified |
-| Firewall rule: `scripts\open-firewall.ps1 -RemoteAddress <VPN subnet>` | Windows administrator | Pending (needs VPN subnet from IT) |
-| Set `HTTPS_BIND=<VPN IP>` and `PORTAL_FQDN` in `.env`; place `certs\portal.*`; redeploy | Workstation user | Pending (needs IT items) |
-| DNS A record, VPN IP reservation, client-to-client policy, certificate, access-policy decision | Celstream IT / network / security | Pending |
+| IT-1 | **Reserve the host IP** | 10.255.109.70 for the hosting workstation: a DHCP reservation (preferred) or an approved static address, so the DNS record never goes stale |
+| IT-2 | **Internal DNS A record** | `bd-poc.celstream-in.com  A  10.255.109.70` in the internal `celstream-in.com` zone only, never public DNS. TTL 300–3600 |
+| IT-3 | **VPN DNS** | Configure the FortiClient SSL-VPN portal to push the corporate DNS servers (and split-DNS for `celstream-in.com`). Acceptance: `Resolve-DnsName bd-poc.celstream-in.com` returns 10.255.109.70 on a VPN client |
+| IT-4 | **Office routing / filtering** | Office user subnets → 10.255.109.70 TCP 443 allowed (inter-VLAN ACLs or FortiGate policies, if any) |
+| IT-5 | **VPN policy** | FortiGate SSL-VPN policy: VPN client pool (e.g. 192.168.10.0/24, IT to confirm) → 10.255.109.70 TCP 443. The route already exists; this is the policy permission |
+| IT-6 | **No public exposure** | No VIP, port-forward or public DNS for this host or name |
+| IT-7 | **Subnets for the host firewall** | The authoritative list of office LAN subnets and the VPN client pool, used by `open-firewall.ps1` |
+| IT-8 | **Certificate** | Sign `certs\portal.csr` (generated on the host by `scripts\new-cert-request.ps1 -Request`): Web Server template, SAN `DNS:bd-poc.celstream-in.com`. Return a PEM/CER plus the issuing-CA chain (or a PFX). The corporate root must already be trusted on office and VPN PCs (GPO/Intune). Renewal: IT re-issues before expiry |
+| IT-9 | **Access policy decision** | Confirm the interim model (network-restricted, read-only portal) until SSO is ready; see section D |
+| IT-10 | **Entra ID SSO** (optional, next phase) | App registration and security groups; see section D |
+| IT-11 | **Docker Desktop licence** | Confirm a Docker subscription covers this commercial use |
 
-## Remote access verification (to run once IT items are done)
+## B. Requires Windows administrator rights on 10.255.109.70
 
-On the workstation (VPN connected):
+| # | Task | Command |
+|---|---|---|
+| WA-1 | Inbound firewall rule: 443 on the LAN IP only, approved subnets only | `powershell -ExecutionPolicy Bypass -File scripts\open-firewall.ps1 -LanIp 10.255.109.70 -OfficeSubnets <IT-7 office list> -VpnSubnets <IT-7 VPN pool>` |
+| WA-2 | Keep the host available | Docker Desktop: *Start when you sign in* = on. Power plan: never sleep on AC. The host must stay signed in, powered on and on the LAN |
+| WA-3 | Review the extra open ports | 80 and 3389 are reachable from the VPN. Not required by this app |
+
+## C. Implementation (Claude): done in the repository; apply on the host
+
+| Item | State |
+|---|---|
+| `HTTPS_BIND` support: publish 443 on the LAN IP only. `deploy.ps1` refuses if the IP isn't an active address on the host | Done |
+| `deploy.ps1` refuses shared binding without a **validated corporate certificate** (`bdlive.certcheck`: SAN, validity, key match, not self-signed, chain present). In corporate mode the interim `localhost` / local-CA site is removed entirely | Done (checker tested with test certificates) |
+| `scripts\new-cert-request.ps1`: private key + CSR (`-Request`), install the returned certificate and chain (`-Install`), or extract from a PFX (`-FromPfx`). The key never leaves the host | Done |
+| `scripts\open-firewall.ps1`: scoped by local IP and remote subnets, all profiles, 443 only | Done |
+| Read-only portal by default (`PORTAL_MODE=read-only`): no run controls and no API verification for general users. Operators queue runs on the host with `scripts\start-run.ps1` | Done |
+| `/status.json`: worker heartbeat, run state and counts. No credentials, contact details or CRM data. Used for remote validation | Done |
+| `scripts\validate-access.ps1`: standalone client test (DNS, TCP, **trusted** certificate, health, heartbeat, data, monitoring) with a JSON evidence file | Done |
+| `scripts\network-report.ps1`: host facts for IT | Done |
+| Business logic, integrations, containers and existing volumes/data | Unchanged; redeploying keeps `bd-live-data` |
+
+### Apply on 10.255.109.70 (host operator)
+
 ```powershell
-Get-NetIPAddress -AddressFamily IPv4 | Where-Object InterfaceAlias -match 'Forti|PANGP|Ethernet [234]'
-docker compose ps                                   # all healthy
-curl.exe -sI https://bd-poc.celstream-in.com --resolve bd-poc.celstream-in.com:443:<VPN-IP>
+cd <project folder>; git pull
+powershell -ExecutionPolicy Bypass -File scripts\backup.ps1 -Label before-lan
+powershell -ExecutionPolicy Bypass -File scripts\network-report.ps1
+powershell -ExecutionPolicy Bypass -File scripts\new-cert-request.ps1 -Request      # send certs\portal.csr to IT (IT-8)
+# when IT returns the certificate:
+powershell -ExecutionPolicy Bypass -File scripts\new-cert-request.ps1 -Install -Certificate <bd-poc.cer> -Chain <issuing-ca.cer>
+# .env:  PORTAL_FQDN=bd-poc.celstream-in.com   HTTPS_BIND=10.255.109.70   HTTPS_PORT=443   PORTAL_MODE=read-only
+powershell -ExecutionPolicy Bypass -File scripts\deploy.ps1                        # refuses without a valid corporate cert
 ```
-From a different VPN-connected machine:
-```powershell
-Resolve-DnsName bd-poc.celstream-in.com             # returns the workstation VPN IP
-Test-NetConnection bd-poc.celstream-in.com -Port 443  # TcpTestSucceeded : True
-curl.exe -sI https://bd-poc.celstream-in.com        # HTTP/1.1 200 or 401 (if basic auth); no TLS error
-```
-Then open `https://bd-poc.celstream-in.com` in a browser. The certificate must be trusted
-without warnings, and the banner must read **Worker online**. FQDN setup counts as complete
-only when all of these pass from a second machine.
+
+Until the certificate arrives, keep `HTTPS_BIND=127.0.0.1` (local only). `deploy.ps1` keeps the
+existing database volume; the seed step is skipped because the volume is already populated.
+
+## D. Authentication: Entra ID / SSO recommendation
+
+**Recommended design:** keep Caddy in front, and add **oauth2-proxy** (OIDC against Microsoft
+Entra ID) as a `forward_auth` gate. Roles come from Entra security groups. oauth2-proxy passes
+the user and groups to the portal in request headers (`X-Auth-Request-Email`,
+`X-Auth-Request-Groups`).
+
+| Role | Entra group (proposed) | Permissions |
+|---|---|---|
+| General employee | `BD-Portal-Readers` (or all Celstream staff) | Read-only: overview, opportunities, Apollo/HubSpot views, live monitoring, history |
+| BD operator | `BD-Portal-Operators` | Plus: start or reprocess workflow runs, API read-back verification |
+| Administrator | `BD-Portal-Admins` | Plus: maintenance, i.e. backups, restore, redeploy, configuration. Keep these on the host (CLI and scripts); they are not exposed through the web portal |
+
+**What IT provides:**
+- the tenant ID
+- an app registration (client ID plus a client secret or certificate) with redirect URI
+  `https://bd-poc.celstream-in.com/oauth2/callback`
+- the `groups` claim (or app roles) and the three group object IDs
+- admin consent
+- outbound HTTPS from the host to `login.microsoftonline.com`
+
+**Implementation once IT has provided these** (about half a day): add the oauth2-proxy
+container, add a `forward_auth` block in `proxy/auth/active.caddy`, and add a `PORTAL_MODE=sso`
+role check in `app.py`. Secrets go in `.env` only.
+
+**Interim, until SSO (implemented):** the portal is reachable only from the approved office and
+VPN subnets, and it is read-only for everyone. Runs are started by operators on the host
+(`scripts\start-run.ps1`). An optional shared login is available via `scripts\set-portal-auth.ps1`.
+
+**Secrets:**
+- The dashboard and `/status.json` never show API keys or tokens. Credentials exist only in
+  `.env`, which is injected at runtime and excluded from the image and from git.
+- Error text written to logs or shown in the UI is scrubbed of credential values.
+- The host's Docker administrators can still read the credentials with `docker inspect`, so
+  limit who administers the host.
+
+## E. Validation (completion criteria)
+
+Run `scripts\validate-access.ps1` (standalone; copy it to each machine) on each machine below,
+then open the URL in a browser:
+
+| Where | Command | Must pass |
+|---|---|---|
+| Hosting workstation 10.255.109.70 | `validate-access.ps1 -Location Host -ExpectedIp 10.255.109.70` | All 8 checks |
+| Second office workstation | `validate-access.ps1 -Location Office -ExpectedIp 10.255.109.70` | All 8 checks + browser: no certificate warning, "Worker online" |
+| Separate PC on the Celstream VPN | `validate-access.ps1 -Location VPN -ExpectedIp 10.255.109.70` | All 8 checks + browser |
+
+The checks are: DNS resolution, TCP 443, trusted certificate, portal health, worker heartbeat,
+current data, execution monitoring, and portal page.
+
+**The deployment is complete only when the Office and VPN rows both pass.** Keep the JSON
+evidence files the script writes.
+
+Current state: Host not run; Office not run; VPN partial (routing, ping and TCP 443 OK; DNS
+absent; TLS reset).

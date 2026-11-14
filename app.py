@@ -8,6 +8,7 @@ the live parts of the page rerun.
 from __future__ import annotations
 
 import json
+import os
 from datetime import UTC, datetime
 from functools import lru_cache
 
@@ -27,6 +28,10 @@ STATUS_ICON = {"success": "🟢 success", "failed": "🔴 failed", "partial": "�
 VALID_CONTACT = "apollo_status != 'rejected'"
 VALID_COMPANY = "apollo_status != 'rejected'"
 LIVE_REFRESH = "5s"
+# read-only (default for the shared deployment): no run controls, no API verification.
+# operator: run controls enabled for everyone who can reach the portal.
+PORTAL_MODE = os.environ.get("PORTAL_MODE", "operator").strip().lower()
+READ_ONLY = PORTAL_MODE != "operator"
 OVERVIEW_REFRESH = "30s"
 
 
@@ -135,7 +140,8 @@ def company_overall(apollo_status, hubspot_status):
 # ------------------------------------------------------------------ header + worker banner
 st.title("Celstream BD — Live Automated PoC")
 st.caption("TheirStack → OpenAI capability analysis → scoring → Apollo → HubSpot. "
-           "All figures are read live from the shared run database; no demo values.")
+           "All figures are read live from the shared run database; no demo values."
+           + (" · Read-only view" if READ_ONLY else " · Operator mode"))
 missing = settings().missing_credentials()
 if missing:
     st.error(f"Missing configuration: {', '.join(missing)}")
@@ -266,6 +272,10 @@ with tabs[0]:
 
 # ------------------------------------------------------------------ B. live execution
 def run_controls():
+    if READ_ONLY:
+        st.info("Read-only portal: workflow runs are started by BD operators on the host "
+                "(scripts/start-run.ps1). Live progress of any run appears below.")
+        return
     cfg = run_config()
     with st.form("start_run", border=True):
         st.markdown("**Start a workflow run** (executed by the bd-live-worker container)")
@@ -539,7 +549,10 @@ with tabs[7]:
     table(db.query(sql + " ORDER BY id DESC LIMIT 500", params))
 
     st.subheader("Destination verification (read-only)")
-    if st.button("Read records back from Apollo and HubSpot APIs"):
+    if READ_ONLY:
+        st.caption("Available to operators on the host: docker compose exec bd-live-worker "
+                   "python -c \"from bdlive.verify import verify_all; print(verify_all())\"")
+    elif st.button("Read records back from Apollo and HubSpot APIs"):
         from bdlive.verify import verify_all
 
         with st.spinner("Querying Apollo and HubSpot…"):

@@ -8,6 +8,7 @@ Live behaviour is proven separately by run_workflow.py + bdlive.verify against r
 from __future__ import annotations
 
 import itertools
+import json
 from types import SimpleNamespace
 
 import pytest
@@ -338,3 +339,26 @@ def test_queue_prevents_duplicates_and_worker_executes_and_recovers(env):
     stuck_row = db.one("SELECT * FROM processing_runs WHERE id=?", (stuck,))
     assert stuck_row["status"] == "failed" and "interrupted" in stuck_row["error"]
     assert runs.active_run() is None  # a new run can now be requested
+
+
+def test_status_snapshot_has_no_sensitive_fields(env, tmp_path):
+    from bdlive import runs
+
+    FakeTheirStack.jobs = [raw_job(1, "acme.com", "Acme")]
+    FakeApollo.people = {"acme.com": leaders("acme.com")}
+    workflow.run_workflow(max_jobs=1)
+    path = tmp_path / "status" / "status.json"
+    runs.write_status_file(path)
+    text = path.read_text(encoding="utf-8")
+    snap = json.loads(text)
+    assert set(snap) == {"generated_at", "worker", "active_run", "last_run", "counts"}
+    assert snap["counts"]["jobs"] == 1 and snap["counts"]["contacts"] == 2
+    for forbidden in ("Ana", "Ben", "acme.com", "api_key", "token", "@"):
+        assert forbidden not in text
+
+
+def test_certcheck_rejects_missing_files(tmp_path):
+    from bdlive.certcheck import check
+
+    result = check(str(tmp_path / "none.crt"), str(tmp_path / "none.key"), "bd-poc.celstream-in.com")
+    assert result["ok"] is False and result["errors"]

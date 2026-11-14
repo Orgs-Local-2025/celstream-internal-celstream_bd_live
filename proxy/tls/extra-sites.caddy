@@ -1,0 +1,5 @@
+# Interim mode: local validation site using the Caddy local CA (never shared).
+localhost {
+	tls internal
+	import portal
+}

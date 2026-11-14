@@ -26,6 +26,8 @@ log = logging.getLogger("bdlive.worker")
 POLL_SECONDS = float(os.environ.get("WORKER_POLL_SECONDS", "3"))
 HEARTBEAT_SECONDS = float(os.environ.get("WORKER_HEARTBEAT_SECONDS", "10"))
 VERSION = "bd-live-worker/1"
+# Published read-only by bd-live-proxy at https://<fqdn>/status.json (see runs.status_snapshot).
+STATUS_FILE = os.environ.get("WORKER_STATUS_FILE", "")
 
 
 class Worker:
@@ -43,6 +45,11 @@ class Worker:
             runs.heartbeat(self.worker_id, state, run_id, self.started_at, VERSION)
         except Exception:  # noqa: BLE001 - a missed beat must not kill the worker
             log.exception("heartbeat failed")
+        if STATUS_FILE:
+            try:
+                runs.write_status_file(STATUS_FILE)
+            except Exception:  # noqa: BLE001
+                log.exception("status file write failed")
 
     def _heartbeat_loop(self):
         while not self.stop.wait(HEARTBEAT_SECONDS):
