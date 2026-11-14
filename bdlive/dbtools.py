@@ -35,10 +35,31 @@ def counts(path: Path) -> dict:
         conn.close()
 
 
+def staged_copy(source: Path) -> Path:
+    """Copy the source DB (plus any un-checkpointed -wal file) to a writable temp dir.
+    A WAL database on a read-only mount cannot be opened in place (SQLite must create its
+    -shm file), and ignoring the -wal file would silently drop the newest changes."""
+    import shutil
+    import tempfile
+
+    stage = Path(tempfile.mkdtemp(prefix="bd-import-")) / "source.db"
+    shutil.copy2(source, stage)
+    wal = Path(str(source) + "-wal")
+    if wal.exists():
+        shutil.copy2(wal, Path(str(stage) + "-wal"))
+    conn = sqlite3.connect(stage)  # opening applies the WAL; checkpoint folds it in
+    try:
+        conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+    finally:
+        conn.close()
+    return stage
+
+
 def copy_into_live(source: Path, force: bool) -> dict:
     target = settings().database_path
     if not source.exists():
         raise SystemExit(f"source not found: {source}")
+    source = staged_copy(source)
     if counts(source).get("integrity") != "ok":
         raise SystemExit("source failed PRAGMA integrity_check; refusing to import")
     if target.exists() and counts(target).get("jobs", 0) and not force:

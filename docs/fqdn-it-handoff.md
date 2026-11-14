@@ -14,7 +14,7 @@ items below are done.
 | VPN state at inspection | **Not connected.** Both virtual adapters were disconnected or disabled, so **no VPN IPv4 address is available yet** |
 | Active network | Home Wi-Fi 192.168.1.55/24 (DHCP), Windows profile **Public** |
 | Other adapter | Wired Ethernet with static 10.255.110.250/24 and DNS 8.8.8.8, unplugged |
-| Docker | **Docker Desktop and WSL are not installed** |
+| Docker | Initially not installed. Docker Desktop (Engine 29.9.3, Compose v5.7.0, WSL 2) was installed later on 14 Nov; the stack is now deployed locally |
 | Privileges | User is in local Administrators but runs non-elevated (UAC) |
 | Firewall | Enabled on all profiles; no inbound rule for 443 |
 | Port 443 | Free (port 80 is held by Windows `System`/http.sys) |
@@ -38,9 +38,10 @@ items below are done.
 | Work | Owner | State |
 |---|---|---|
 | Worker/portal split, run queue, heartbeat, crash recovery, DB migration + backup | Claude | **Done.** Validated live with local processes |
-| Dockerfile, compose, Caddy, `.dockerignore`, health checks, restart policies, volumes, scripts, docs | Claude | **Done.** Statically validated; not yet built |
-| Install WSL 2 + Docker Desktop, enable autostart at sign-in | Windows administrator (elevated) | Pending |
-| `scripts\deploy.ps1` (build, seed volume, start, health, local HTTPS) | Workstation user | Pending (after Docker is installed) |
+| Dockerfile, compose, Caddy, `.dockerignore`, health checks, restart policies, volumes, scripts, docs | Claude | **Done.** Built, deployed and validated locally (see `docker-deployment.md`) |
+| Install WSL 2 + Docker Desktop | Windows administrator | **Done** |
+| Enable *Start Docker Desktop when you sign in* | Workstation user | **Pending** (currently off) |
+| `scripts\deploy.ps1` (build, seed volume, start, health, local HTTPS) | Claude | **Done.** All containers healthy; local HTTPS verified |
 | Firewall rule: `scripts\open-firewall.ps1 -RemoteAddress <VPN subnet>` | Windows administrator | Pending (needs VPN subnet from IT) |
 | Set `HTTPS_BIND=<VPN IP>` and `PORTAL_FQDN` in `.env`; place `certs\portal.*`; redeploy | Workstation user | Pending (needs IT items) |
 | DNS A record, VPN IP reservation, client-to-client policy, certificate, access-policy decision | Celstream IT / network / security | Pending |

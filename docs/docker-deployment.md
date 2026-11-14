@@ -1,9 +1,34 @@
 # Docker deployment — Celstream BD Live PoC (Windows 11 + Docker Desktop)
 
-Status on 14 Nov 2026: all Docker artefacts are written and statically validated. The
-portal/worker split, run queue, crash recovery and database migration were validated live with
-local processes. **The Docker images have not been built yet, because Docker Desktop is not
-installed on this workstation** (see the IT handoff, `fqdn-it-handoff.md`).
+Status on 14 Nov 2026: **deployed and running locally** on Docker Desktop 4.x (Engine 29.9.3,
+Compose v5.7.0, WSL 2) on RAGHUGN-LAP. HTTPS is served on `127.0.0.1:443` with the interim
+Caddy internal CA. Remote access over the VPN through the FQDN is **not set up yet**; it waits
+on the IT items in `fqdn-it-handoff.md`.
+
+## Validation results (14 Nov 2026)
+
+| # | Check | Result |
+|---|---|---|
+| 1–3 | Build images, start containers, health checks | Pass. Worker, portal and proxy all `healthy` |
+| 4 | Portal locally | Pass. `https://localhost` and `https://bd-poc.localhost` → 200 |
+| 5 | Worker operation | Pass. Heartbeat online; queued runs claimed within ~2 s |
+| 6–10 | Controlled live run #9 (1 stored job re-fetched, re-analysed) | Pass. TheirStack 1/1 call, OpenAI 1/1 (5,223 in / 1,927 out tokens, $0.0015), Apollo 5/5 calls, HubSpot 13/13 calls. **0 CRM records created**; 1 company + 2 contacts updated on each platform; totals unchanged (Apollo 9/17, HubSpot 10/19) |
+| 11 | Execution status updates | Pass. Stage and progress were updated through all 6 stages |
+| 12–13 | Portal restart and persistence | Pass. Healthy again; all table counts identical; worker unaffected |
+| 14 | Worker restart while idle | Pass. Graceful SIGTERM stop, healthy again in about 1 s |
+| 15 | Worker killed mid-run (run #10, Apollo stage) | Pass. On restart run #10 was marked `failed: interrupted … safe to re-run`; re-queued run #11 succeeded with 0 records created |
+| 16 | Restart behaviour | Pass. An unexpected worker exit was restarted by Docker automatically (restart count 1). After `docker desktop restart`, all 3 containers came back healthy within ~30 s with the data intact. Note: `docker kill`/`docker stop` count as manual stops, which `unless-stopped` deliberately does not restart |
+| 17 | HTTPS locally | Pass with the interim certificate. TLS 1.3, Caddy Local Authority (12 h certificates, auto-renewed), HSTS/nosniff/DENY/no-referrer headers, `Server` header removed, unknown hostnames refused at the handshake. Streamlit 8501 is not reachable from the host. Browsers report the certificate as untrusted until the corporate certificate is installed |
+| 18 | Remote VPN access | **Not done.** Instructions are in `fqdn-it-handoff.md` |
+
+Data migration: the `bd-live-data` volume was seeded from `data\bd_live.db` (9 jobs, 9
+companies, 17 contacts, 8 runs, 874 log rows; integrity `ok`). **The Docker volume is now the
+system of record;** `data\bd_live.db` on the host is a stale copy. Don't run a local worker
+against it.
+
+**Docker Desktop autostart is currently OFF** (`AutoStart=false`). Turn on
+*Settings > General > Start Docker Desktop when you sign in*, or the stack won't come back
+after a workstation reboot.
 
 ## Architecture
 

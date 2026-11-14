@@ -1,4 +1,2 @@
-# Interim TLS: Caddy local CA. Browsers on other machines will NOT trust this.
-# Replace with the corporate certificate (scripts/deploy.ps1 does this automatically when
-# certs/portal.crt and certs/portal.key exist).
+# Interim TLS: Caddy local CA. NOT trusted by other machines - local validation only.
 tls internal
