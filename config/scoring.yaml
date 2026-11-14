@@ -1,0 +1,35 @@
+version: celstream-capability-scoring-v3
+
+# Scoring policy remains illustrative until Celstream business stakeholders
+# approve the weights, thresholds, target markets and company-size range.
+# Capability evidence is sourced from the Celstream website and, where
+# explicitly identified in capabilities.yaml, Thinxtream partner context.
+# Do not interpret partner-scope matches as independently verified
+# Celstream-only delivery capabilities.
+
+weights:
+  capability_fit: 50
+  hiring_volume: 25
+  recency: 15
+  company_fit: 10
+
+# Distinct evidenced capability matches required for full capability-fit points.
+capability_match_target: 3
+
+# Count at most this many relevant postings when calculating hiring-volume fit.
+relevant_job_cap: 3
+
+# Recency scoring window; aligned with live_search.yaml.
+recency_days: 30
+
+# Existing demo target markets retained. Review before broadening the campaign.
+target_countries: [United States, United Kingdom, India, Canada, Australia, Germany, France, Netherlands, Sweden, Norway, Denmark, Finland, Ireland, Switzerland, Belgium, Austria, Spain, Italy, Portugal]
+
+# Existing company-size qualification retained; this is a business policy,
+# not a value inferred from the capability catalogue.
+employee_min: 50
+employee_max: 5000
+
+# Existing score bands retained pending business approval.
+high_threshold: 70
+medium_threshold: 40

@@ -1,0 +1,29 @@
+# Secrets: injected at runtime via env_file, never baked into the image
+.env
+.env.*
+certs/
+proxy/
+# Local environments, caches, tests and dev tooling
+.venv/
+**/__pycache__/
+**/*.py[cod]
+.pytest_cache/
+.ruff_cache/
+tests/
+pytest.ini
+.git/
+.gitignore
+# Runtime data: databases, backups and logs may contain business/contact data
+data/
+logs/
+backups/
+*.db
+*.db-*
+*.sqlite*
+# Docs and deployment scripts are not needed inside the image
+docs/
+scripts/
+README.md
+Dockerfile
+docker-compose*.yml
+requirements.txt

@@ -1,0 +1,609 @@
+version: celstream-capability-governance-v3
+business_validated: false
+notice: >-
+  This catalogue combines Celstream website-derived, Thinxtream partner and illustrative entries.
+  Business approval is pending; references do not establish approval or substantiate every technology.
+capabilities:
+  - id: digital-product-engineering
+    provenance: celstream_website
+    validation_status: pending
+    sources:
+      - https://www.celstream.com/digital-product-engineering-services.html
+    source_note: >-
+      Candidate reference pending business review; it does not independently substantiate
+      every technology listed below.
+    name: Digital product engineering
+    description: >-
+      End-to-end product engineering across the product lifecycle, from
+      ideation, concept validation and design through development, testing,
+      deployment, operations, support and sustenance. Engagements can cover
+      complete products or selected components and can be turnkey or
+      co-development.
+    technologies:
+      - Hardware engineering
+      - Software engineering
+      - Product design
+      - Concept validation
+      - Product development
+      - Product lifecycle management
+      - Legacy product sustenance
+      - System integration
+
+  - id: mobile-app-development
+    provenance: celstream_website
+    validation_status: pending
+    sources:
+      - https://www.celstream.com/mobility-solutions-applications-mobile-apps-digital-product-engineering-design-development-testing-services.html
+    source_note: >-
+      Candidate reference pending business review; it does not independently substantiate
+      every technology listed below.
+    name: Mobile app development
+    description: >-
+      Native, cross-platform and hybrid mobile applications for Android and
+      iOS, including wearable apps, device interfaces, cloud and database
+      integration, analytics, notifications, testing and app-store publishing.
+    technologies:
+      - Swift
+      - Objective-C
+      - Kotlin
+      - Java
+      - React Native
+      - Xamarin
+      - Flutter
+      - Qt
+      - Cordova
+      - PhoneGap
+      - Ionic
+      - SQLite
+      - Couchbase
+      - Realm DB
+      - Appium
+      - AWS Device Farm
+      - Google Analytics
+      - Apple Analytics
+      - Amazon Pinpoint
+      - AWS SNS
+      - Azure Service Bus
+      - Bluetooth Classic
+      - Bluetooth LE
+      - Wi-Fi
+      - USB
+      - NFC
+      - QR Code
+      - Stripe
+      - PayPal
+
+  - id: web-ux-and-frontend
+    provenance: celstream_website
+    validation_status: pending
+    sources:
+      - https://www.celstream.com/digital-front-end.html
+    source_note: >-
+      Candidate reference pending business review; it does not independently substantiate
+      every technology listed below.
+    name: Web UX and frontend engineering
+    description: >-
+      Responsive web experiences, single-page applications and progressive
+      web applications, including social media integration and modern
+      customer-facing interfaces.
+    technologies:
+      - JavaScript
+      - CSS
+      - HTML
+      - React
+      - Knockout
+      - AngularJS
+      - Ionic
+      - Polymer
+      - webpack
+      - Lighthouse
+      - jQuery
+      - Bootstrap
+      - Backbone.js
+      - Moment.js
+
+  - id: web-application-development
+    provenance: celstream_website
+    validation_status: pending
+    sources:
+      - https://www.celstream.com/web-applications-digital-product-engineering-design-development-testing-services.html
+    source_note: >-
+      Candidate reference pending business review; it does not independently substantiate
+      every technology listed below.
+    name: Web application development
+    description: >-
+      Design, development, testing and deployment of web applications using
+      front-end frameworks, backend platforms and relational or non-relational
+      databases, with scalable, load-balanced and containerized cloud
+      deployments.
+    technologies:
+      - C#.NET
+      - Python
+      - JavaScript
+      - C++
+      - PHP
+      - Java
+      - R
+      - Go
+      - HTML5
+      - CSS3
+      - jQuery
+      - Bootstrap
+      - React
+      - Angular
+      - Backbone.js
+      - Node.js
+      - Express
+      - Laravel
+      - ASP.NET
+      - Spring
+      - Hibernate
+      - MySQL
+      - MongoDB
+      - PostgreSQL
+      - AWS SQL and NoSQL databases
+      - Azure SQL and NoSQL databases
+
+  - id: embedded-systems-engineering
+    provenance: celstream_website
+    validation_status: pending
+    sources:
+      - https://www.celstream.com/embedded-systems-hardware-firmware-software-digital-product-engineering-design-development-testing-services.html
+    source_note: >-
+      Candidate reference pending business review; it does not independently substantiate
+      every technology listed below.
+    name: Embedded systems engineering
+    description: >-
+      Embedded hardware, firmware and application engineering, including
+      chipset selection, board bring-up, device drivers, connectivity,
+      power management, embedded testing and integration with mobile and
+      cloud applications.
+    technologies:
+      - Microchip
+      - STMicroelectronics
+      - NXP
+      - Nordic
+      - Espressif
+      - Texas Instruments
+      - Dialog Semiconductor
+      - Marvell
+      - Intel
+      - Unix
+      - Linux
+      - Android
+      - FreeRTOS
+      - Zephyr
+      - TI-RTOS
+      - Mbed OS
+      - VxWorks
+      - Bare metal
+      - C
+      - C++
+      - MPLAB X
+      - Atollic TrueSTUDIO
+      - Keil
+      - CodeWarrior
+      - SEGGER Embedded Studio
+      - Wind River Workbench
+      - TI Code Composer Studio
+      - STM32 CubeMX
+      - Wi-Fi
+      - Bluetooth
+      - Zigbee
+      - Cellular
+      - GNSS
+      - USB
+      - I2C
+      - SPI
+      - PCI
+      - UART
+
+  - id: cloudification-and-cloud-applications
+    provenance: celstream_website
+    validation_status: pending
+    sources:
+      - https://www.celstream.com/cloudification-cloud-applications-solutions-digital-product-engineering-design-development-testing-services.html
+    source_note: >-
+      Candidate reference pending business review; it does not independently substantiate
+      every technology listed below.
+    name: Cloudification and cloud applications
+    description: >-
+      Development of new cloud applications, migration of on-premises
+      applications to homogeneous, hybrid and multi-cloud environments,
+      device-to-cloud transformation, and post-deployment cloud monitoring,
+      maintenance and DevOps.
+    technologies:
+      - AWS
+      - Microsoft Azure
+      - Force.com
+      - Google App Engine
+      - Cloud-native applications
+      - Containerization
+      - Microservices
+      - Auto-scaling
+      - Multi-tenancy
+      - Hybrid cloud
+      - Multi-cloud
+      - Device-to-cloud integration
+
+  - id: enterprise-integration
+    provenance: celstream_website
+    validation_status: pending
+    sources:
+      - https://www.celstream.com/enterprise-application-cloud-data-integration-solutions-digital-product-engineering-design-development-testing-services.html
+    source_note: >-
+      Candidate reference pending business review; it does not independently substantiate
+      every technology listed below.
+    name: Enterprise and application integration
+    description: >-
+      Integration of heterogeneous enterprise, cloud, on-premises, mobile
+      and edge systems; workflow implementation; connector development;
+      API integration; authentication; and schema and data validation.
+    technologies:
+      - AWS Step Functions
+      - Amazon Simple Workflow Service
+      - AWS Batch
+      - Amazon SQS
+      - Amazon MQ
+      - AWS Lambda
+      - Amazon EC2
+      - Amazon ECS
+      - Amazon API Gateway
+      - Amazon CloudWatch
+      - Azure Logic Apps
+      - Azure Functions
+      - Azure Service Bus
+      - Azure API Management
+      - MuleSoft
+      - Anypoint Studio
+      - Anypoint API Manager
+      - Anypoint Design Center
+      - Anypoint Runtime Manager
+      - Anypoint Exchange
+      - DataWeave
+      - MUnit
+      - BizTalk
+      - HTTP
+      - HTTPS
+      - REST APIs
+      - Graph API
+      - OAuth 2.0
+      - XML
+      - JSON
+      - EDIFACT
+      - AS2
+      - X12
+
+  - id: big-data-and-analytics
+    provenance: celstream_website
+    validation_status: pending
+    sources:
+      - https://www.celstream.com/big-data-analytics-applications-solutions-digital-product-engineering-design-development-testing-services.html
+    source_note: >-
+      Candidate reference pending business review; it does not independently substantiate
+      every technology listed below.
+    name: Big data and analytics
+    description: >-
+      Big data solution feasibility, architecture and capacity planning,
+      real-time streaming and integration, data orchestration, migration,
+      ingestion, processing, querying, storage, search, visualization and
+      analytics.
+    technologies:
+      - Amazon QuickSight
+      - Amazon Kinesis
+      - Azure Power BI
+      - Azure Stream Analytics
+      - Azure Data Lake Analytics
+      - Grafana
+      - Qlik
+      - Tableau
+      - Kibana
+      - Amazon Elasticsearch
+      - Amazon CloudSearch
+      - Azure Search
+      - Apache Solr
+      - Apache Lucene
+      - AWS Lake Formation
+      - AWS Data Pipeline
+      - AWS Glue
+      - Azure Data Factory
+      - AWS Direct Connect
+      - AWS DataSync
+      - AWS Database Migration Service
+      - Amazon Kinesis Data Streams
+      - Azure Database Migration Service
+      - Azure Event Hubs
+      - Logstash
+      - Amazon EMR
+      - Amazon Redshift
+      - Amazon Athena
+      - Azure HDInsight
+      - Azure Batch
+      - Azure Analysis Services
+      - Apache Hadoop
+      - Apache Pig
+      - Apache Hive
+      - Apache Storm
+      - Apache Spark
+      - Apache Kafka
+      - Amazon S3
+      - Azure Blob Storage
+      - Azure Cosmos DB
+      - Azure Data Lake
+      - MongoDB
+      - Apache HBase
+      - Apache CouchDB
+      - Apache Cassandra
+
+  - id: ai-and-machine-learning
+    provenance: celstream_website
+    validation_status: pending
+    sources:
+      - https://www.celstream.com/ai-machine-learning-applications-solutions-digital-product-engineering-design-development-testing-services.html
+    source_note: >-
+      Candidate reference pending business review; it does not independently substantiate
+      every technology listed below.
+    name: AI and machine learning
+    description: >-
+      Data preparation, machine learning model development, inference API
+      publishing, edge deployment, chatbots, image classification,
+      predictive analytics and AI-driven operations.
+    technologies:
+      - Amazon SageMaker
+      - Azure Machine Learning
+      - Python
+      - R
+      - Scikit-learn
+      - TensorFlow
+      - PyTorch
+      - Spark ML
+      - Apache MXNet
+      - Microsoft Cognitive Toolkit
+      - Caffe
+      - Caffe2
+      - Theano
+      - Torch
+      - Keras
+      - Amazon Rekognition
+      - Amazon Lex
+      - Amazon Polly
+      - Amazon Transcribe
+      - Amazon Textract
+      - Amazon Translate
+      - Amazon Comprehend
+      - Amazon Personalize
+      - Azure Form Recognizer
+      - Azure Bot Service
+      - Azure Cognitive Search
+      - Azure Cognitive Services
+      - Jupyter Notebook
+      - Docker
+      - AWS Greengrass
+
+  - id: cybersecurity
+    provenance: celstream_website
+    validation_status: pending
+    sources:
+      - https://www.celstream.com/cyber-application-data-security-solutions-digital-product-engineering-design-development-testing-services.html
+    source_note: >-
+      Candidate reference pending business review; it does not independently substantiate
+      every technology listed below.
+    name: Cybersecurity
+    description: >-
+      Application, data and infrastructure security practices across design,
+      coding, testing and operations, including secure SDLC, security
+      assessment, security testing, network protection and remediation.
+    technologies:
+      - Secure software development lifecycle
+      - Application security
+      - Data security
+      - Network security
+      - Security assessment
+      - Security testing
+      - Firewall configuration
+      - HTTP proxy configuration
+      - Virus protection
+      - Operating system patching
+      - Data privacy assessment
+      - PII protection
+
+  - id: digital-product-qa-and-testing
+    provenance: celstream_website
+    validation_status: pending
+    sources:
+      - https://www.celstream.com/digital-product-engineering-services.html
+    source_note: >-
+      Candidate reference pending business review; it does not independently substantiate
+      every technology listed below.
+    name: Digital product QA and testing
+    description: >-
+      Independent quality assurance and testing for embedded, cloud, mobile,
+      desktop and web products, covering functionality, usability,
+      compatibility, scalability, responsiveness, privacy, security,
+      performance and interoperability.
+    technologies:
+      - Selenium
+      - TestComplete
+      - QTP
+      - LoadRunner
+      - WAPT
+      - JUnit
+      - Python test scripts
+      - Perl scripts
+      - VB scripts
+      - PerfMon
+      - JMeter
+      - WebNMS
+      - Wireshark
+      - VMware
+      - Hyper-V
+      - AWS Device Farm
+      - TestRail
+      - JIRA
+      - Redmine
+      - GForge
+      - Appium
+
+  - id: devops-system-integration-and-support
+    provenance: celstream_website
+    validation_status: pending
+    sources:
+      - https://www.celstream.com/digital-product-engineering-services.html
+    source_note: >-
+      Candidate reference pending business review; it does not independently substantiate
+      every technology listed below.
+    name: DevOps, system integration and support
+    description: >-
+      Post-release services including hosting, operation, maintenance and
+      management of cloud services, product customization and system
+      integration, mobile app store submissions and updates, and L1, L2
+      and L3 field support.
+    technologies:
+      - DevOps
+      - Cloud operations
+      - System integration
+      - Product customization
+      - Mobile app submission
+      - Mobile app updates
+      - L1 support
+      - L2 support
+      - L3 field support
+      - Email-based support
+
+  - id: legacy-product-sustenance
+    provenance: celstream_website
+    validation_status: pending
+    sources:
+      - https://www.celstream.com/digital-product-engineering-services.html
+    source_note: >-
+      Candidate reference pending business review; it does not independently substantiate
+      every technology listed below.
+    name: Legacy product sustenance
+    description: >-
+      Turnkey maintenance of legacy products and embedded modules, including
+      bug fixes, firmware upgrades, security fixes, remote monitoring and
+      configuration agents, drivers, networking and power or battery
+      management.
+    technologies:
+      - C
+      - C++
+      - Bare metal
+      - Linux
+      - Android
+      - VxWorks
+      - ThreadX
+      - Windows CE
+      - Microchip 8-bit, 16-bit and 32-bit processors
+      - ATMEL
+      - Nordic nRF51
+      - Nordic nRF52
+      - STMicroelectronics STM32
+      - Espressif ESP8266
+      - Espressif ESP32
+      - TI Sitara
+      - TI DM3730
+      - NXP i.MX6
+      - SNMP
+      - HTTP
+      - HTTPS
+      - RTP
+      - RTSP
+      - TR-069
+      - SMTP
+      - SFTP
+      - SMB
+      - UDP
+      - TCP/IP
+      - mDNS
+      - DHCP
+      - RS232
+      - RS422
+      - DLNA
+      - Bluetooth Classic
+      - Bluetooth LE
+      - USB
+      - Bonjour
+      - UPnP
+
+
+  - id: desktop-application-development
+    provenance: thinxtream_partner
+    validation_status: pending
+    sources:
+      - https://www.thinxtream.com/product-development-services-scope-expertise-engagement-models.html#Scope
+    source_note: >-
+      Candidate reference pending business review; it does not independently substantiate
+      every technology listed below.
+    name: Desktop application development
+    description: >-
+      Desktop application development is identified as a technology domain
+      in Thinxtream's product-development scope. The referenced page does not
+      specify desktop frameworks or platforms. Treat this as partner-scope
+      evidence pending Celstream-specific validation.
+    technologies: []
+
+  - id: digital-commerce-and-subscription-integration
+    provenance: thinxtream_partner
+    validation_status: pending
+    sources:
+      - https://www.thinxtream.com/product-development-services-scope-expertise-engagement-models.html#Scope
+    source_note: >-
+      Candidate reference pending business review; it does not independently substantiate
+      every technology listed below.
+    name: Digital commerce and subscription integration
+    description: >-
+      Social media integration, subscriptions and digital payments are listed
+      as technology domains in Thinxtream's product-development scope.
+      Specific platforms and implementation technologies are not identified
+      on the referenced page. Treat this as partner-scope evidence pending
+      Celstream-specific validation.
+    technologies: []
+  - id: software-engineering
+    provenance: illustrative
+    validation_status: pending
+    sources: []
+    source_note: >-
+      No documented source attribution; these illustrative services and technologies
+      are pending business review.
+    name: Software engineering
+    description: Illustrative application and backend software engineering services.
+    technologies: [Python, Java, React, Angular, DotNet, .NET Core, Node.js, Microservices, REST APIs, GraphQL APIs, Docker, Kubernetes]
+  - id: quality-engineering
+    provenance: illustrative
+    validation_status: pending
+    sources: []
+    source_note: >-
+      No documented source attribution; these illustrative services and technologies
+      are pending business review.
+    name: Quality engineering
+    description: Illustrative software test automation and quality engineering services.
+    technologies: [pytest, Selenium, Playwright, Manual Testing, Test Automation, Performance Testing, Security Testing]
+  - id: cloud-platforms
+    provenance: illustrative
+    validation_status: pending
+    sources: []
+    source_note: >-
+      No documented source attribution; these illustrative services and technologies
+      are pending business review.
+    name: Cloud and platform engineering
+    description: Illustrative cloud migration and platform automation services.
+    technologies: [AWS, Azure, Terraform, Ansible, Kubernetes, Docker, CI/CD, Jenkins, GitHub Actions, GitLab CI/CD]
+  - id: data-engineering
+    provenance: illustrative
+    validation_status: pending
+    sources: []
+    source_note: >-
+      No documented source attribution; these illustrative services and technologies
+      are pending business review.
+    name: Data engineering
+    description: Illustrative data pipeline and analytics engineering services.
+    technologies: [SQL, Spark, Airflow, Kafka, ETL, Data Warehousing, Data Lakes, BigQuery, Redshift, Snowflake]
+    
+
+technology_aliases:
+  DotNet: [".NET", ".NET Framework"]
+  "C#.NET": ["C#", "C Sharp"]
+  AWS: [Amazon Web Services]
+  Microsoft Azure: [Azure]
+  Bluetooth LE: [BLE, Bluetooth Low Energy]
+  Quality engineering: [QA, Quality Assurance]

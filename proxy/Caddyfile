@@ -1,0 +1,42 @@
+# bd-live-proxy: HTTPS termination and FQDN routing for the Celstream BD portal.
+# TLS mode:   proxy/tls/active.caddy   (written by scripts/deploy.ps1)
+#   - corporate certificate:  tls /certs/portal.crt /certs/portal.key   (shared use)
+#   - interim:                tls internal   (Caddy local CA; local validation ONLY)
+# App auth:   proxy/auth/active.caddy  (empty = VPN-only; or basic_auth via set-portal-auth.ps1)
+{
+	admin 127.0.0.1:2019
+	# Never request public ACME certificates: this portal is internal-only.
+	auto_https disable_redirects
+	servers {
+		protocols h1 h2
+	}
+}
+
+(portal) {
+	import /etc/caddy/auth/active.caddy
+	encode gzip
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "no-referrer"
+		-Server
+	}
+	reverse_proxy bd-live-portal:8501
+	log {
+		output stdout
+		format console
+	}
+}
+
+# Internal FQDN (set PORTAL_FQDN in .env once IT has approved the name).
+{$PORTAL_FQDN} {
+	import /etc/caddy/tls/active.caddy
+	import portal
+}
+
+# Local administration / validation on the workstation itself.
+localhost {
+	tls internal
+	import portal
+}

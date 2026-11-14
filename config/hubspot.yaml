@@ -1,0 +1,31 @@
+version: hubspot-review-v1
+approval_ttl_hours: 24
+page_size: 100
+max_pages: 10
+associations_enabled: true
+
+# Default: preserve populated CRM values. Conflicts need explicit field selection
+# followed by approval of the revised hash. No properties are created by this app.
+company_fields:
+  - {source: name, property: name, ownership: fill_empty}
+  - {source: domain, property: domain, ownership: fill_empty}
+  - {source: website, property: website, ownership: fill_empty}
+  - {source: lead_source, property: celstream_lead_source, ownership: fill_empty}
+  - {source: service_interest, property: celstream_service_interest, ownership: fill_empty}
+  - {source: opportunity_score, property: celstream_opportunity_score, ownership: fill_empty}
+  - {source: opportunity_priority, property: celstream_opportunity_priority, ownership: fill_empty}
+  - {source: ai_recommendation, property: celstream_ai_recommendation, ownership: fill_empty}
+  - {source: hiring_signals, property: celstream_hiring_signals, ownership: fill_empty}
+  - {source: job_references, property: celstream_job_references, ownership: fill_empty}
+  - {source: last_discovery_date, property: celstream_last_discovery_date, ownership: fill_empty}
+  - {source: source_system, property: celstream_source_system, ownership: fill_empty}
+contact_fields:
+  - {source: first_name, property: firstname, ownership: fill_empty}
+  - {source: last_name, property: lastname, ownership: fill_empty}
+  - {source: email, property: email, ownership: fill_empty}
+  - {source: job_title, property: jobtitle, ownership: fill_empty}
+  # LinkedIn is explicitly custom; do not assume hs_linkedin_url exists in a portal.
+  - {source: linkedin_url, property: celstream_linkedin_url, ownership: fill_empty}
+  - {source: source_system, property: celstream_source_system, ownership: fill_empty}
+  - {source: apollo_id, property: celstream_apollo_id, ownership: fill_empty}
+  - {source: last_discovery_date, property: celstream_last_discovery_date, ownership: fill_empty}

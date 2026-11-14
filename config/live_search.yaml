@@ -1,0 +1,44 @@
+version: celstream-capability-live-search-v2
+
+criteria:
+  # Keep aligned with scoring.yaml recency_days.
+  posted_at_max_age_days: 30
+
+  # Expanded to cover the capability areas represented in capabilities.yaml:
+  # web/mobile, embedded/firmware, cloud/DevOps, integration, data/AI,
+  # cybersecurity, QA/testing and desktop product engineering.
+  job_title_or:
+    - Software Developer
+    - Web Application Developer
+    - Frontend Developer
+    - Backend Developer
+    - Full Stack Engineer
+    - Mobile Application Developer
+    - iOS Developer
+    - Android Developer
+    - React Native Developer
+    - Embedded Systems Engineer
+    - IoT Engineer
+    - Cloud Developer
+    - DevOps Engineer
+    - Big Data Engineer
+    - Data Scientist
+    - Machine Learning Engineer
+    - AI Engineer
+    - QA Engineer
+    - Test Automation Engineer
+    - Cybersecurity Engineer
+
+  job_country_code_or: [US, GB, IN, CA, AU, DE, FR, NL, SE, "NO", DK, FI, IE, CH, BE, AT, ES, IT, PT]
+  # Left empty intentionally: the connector's exact pattern semantics should
+  # be confirmed before adding broad technology keyword patterns that may
+  # generate noisy matches. Capability mapping is performed during analysis.
+  job_description_pattern_or: []
+
+  # No company-domain allowlist is applied.
+  company_domain_or: []
+
+# Preserve the existing run limits for a controlled first live run.
+max_jobs: 30
+max_ai_jobs: 10
+max_concurrent_ai_requests: 1

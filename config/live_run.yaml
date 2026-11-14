@@ -1,0 +1,32 @@
+# Run-size and extra live filters for celstream_bd_live_poc.
+# Base search criteria come unchanged from live_search.yaml (reference project).
+version: celstream-bd-live-run-v1
+
+# Start with one record end-to-end, then increase.
+default_max_jobs: 1
+max_jobs_limit: 30
+theirstack_page_size: 10
+
+# Extra TheirStack filters applied on top of live_search.yaml criteria.
+# Employee range mirrors scoring.yaml employee_min/employee_max so retrieved
+# companies can actually earn company-profile points.
+theirstack_extra_filters:
+  min_employee_count: 50
+  max_employee_count: 5000
+  company_type: direct_employer
+  order_by:
+    - {field: date_posted, desc: true}
+
+# Only companies with a resolvable web domain can be safely de-duplicated in
+# Apollo and HubSpot. Jobs without a company domain are stored but skipped downstream.
+require_company_domain: true
+
+apollo:
+  contacts_per_company: 2          # bounded: each enrichment consumes Apollo credits
+  enrich_contacts: true            # people/match without personal email / phone reveal
+  label_prefix: "Celstream BD"
+
+hubspot:
+  # Standard CRM fields are only filled when empty; celstream_* fields are app-owned
+  # and refreshed on every run.
+  overwrite_app_owned_properties: true

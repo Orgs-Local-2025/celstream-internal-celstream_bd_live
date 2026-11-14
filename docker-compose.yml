@@ -1,0 +1,97 @@
+# Celstream BD Live PoC — Docker Desktop (Windows 11) deployment.
+#   bd-live-worker  executes queued workflow runs (TheirStack/OpenAI/Apollo/HubSpot)
+#   bd-live-portal  Streamlit portal (internal only, never published)
+#   bd-live-proxy   Caddy: HTTPS termination + FQDN routing; the ONLY published port
+# Credentials come from ./.env at runtime (env_file); they are never copied into the image.
+name: celstream-bd-live
+
+x-app: &app
+  build: .
+  image: celstream/bd-live:local
+  env_file: .env
+  environment:
+    LIVE_DATABASE_PATH: /data/bd_live.db
+    LIVE_BACKUP_DIR: /backups
+    TZ: UTC
+  volumes:
+    - bd-live-data:/data
+    - bd-live-backups:/backups
+  networks: [bd-internal]
+  restart: unless-stopped
+  logging:
+    driver: json-file
+    options: {max-size: "10m", max-file: "5"}
+
+services:
+  bd-live-worker:
+    <<: *app
+    container_name: bd-live-worker
+    command: ["python", "-m", "bdlive.worker"]
+    environment:
+      LIVE_DATABASE_PATH: /data/bd_live.db
+      LIVE_BACKUP_DIR: /backups
+      TZ: UTC
+      WORKER_ID: bd-live-worker
+    # Allow a short run to finish on `docker compose stop`; an interrupted run is marked
+    # failed on the next start and can be re-queued (all stages are idempotent).
+    stop_grace_period: 2m
+    healthcheck:
+      test: ["CMD", "python", "-m", "bdlive.worker", "--health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+  bd-live-portal:
+    <<: *app
+    container_name: bd-live-portal
+    command: ["streamlit", "run", "app.py", "--server.address=0.0.0.0",
+              "--server.port=8501"]
+    expose: ["8501"]
+    healthcheck:
+      test: ["CMD", "python", "-c",
+             "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8501/_stcore/health', timeout=5).status == 200 else 1)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  bd-live-proxy:
+    image: caddy:2.10.2-alpine
+    container_name: bd-live-proxy
+    depends_on:
+      bd-live-portal:
+        condition: service_healthy
+    environment:
+      PORTAL_FQDN: ${PORTAL_FQDN:-bd-poc.localhost}
+    ports:
+      # HTTPS only. Bind to the VPN adapter IP (HTTPS_BIND) once IT confirms it; 127.0.0.1
+      # keeps the portal local-only until the VPN/firewall/DNS handoff is complete.
+      - "${HTTPS_BIND:-127.0.0.1}:${HTTPS_PORT:-443}:443"
+    volumes:
+      - ./proxy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./proxy/tls:/etc/caddy/tls:ro
+      - ./proxy/auth:/etc/caddy/auth:ro
+      - ./certs:/certs:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    networks: [bd-internal]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:2019/config/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: json-file
+      options: {max-size: "10m", max-file: "5"}
+
+volumes:
+  bd-live-data:        # SQLite database (jobs, companies, contacts, analyses, runs, logs)
+  bd-live-backups:     # automatic pre-migration and manual backups
+  caddy-data:          # Caddy internal CA / certificate state
+  caddy-config:
+
+networks:
+  bd-internal:

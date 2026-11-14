@@ -1,0 +1,23 @@
+version: apollo-discovery-v1
+# Smaller values are allowed for controlled validation; PoC upper bounds are 5 and 3.
+max_companies: 3
+max_contacts_per_company: 3
+enrichment_enabled: false
+page_size: 10
+max_pages_per_company: 3
+# Whole normalized titles only. Extend explicit variants here; no substring matching.
+roles:
+  - category: technology_executive
+    titles: [CTO, Chief Technology Officer]
+  - category: engineering_vp
+    titles: [VP Engineering, VP of Engineering, Vice President of Engineering]
+  - category: engineering_head
+    titles: [Head of Engineering]
+  - category: engineering_director
+    titles: [Director of Engineering, Engineering Director]
+  - category: engineering_manager
+    titles: [Engineering Manager]
+  - category: quality_leader
+    titles: [Head of QA, QA Director, Head of Quality Engineering, Director of Quality Assurance]
+  - category: product_leader
+    titles: [Head of Product]
